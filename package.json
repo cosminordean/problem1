@@ -1,0 +1,28 @@
+{
+  "name": "challange",
+  "version": "1.0.0",
+  "description": "Parse path for libraries",
+  "main": "src/index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "dev": "node src/index.js -s examples",
+    "test": "mocha --reporter spec"
+  },
+  "author": "Cosmin Ordean <cosminordean@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "chai": "^4.3.7",
+    "chai-as-promised": "^7.1.1",
+    "minimist": "^1.2.8",
+    "mocha": "^10.2.0"
+  },
+  "engines": {
+    "node": ">=16.19.0"
+  },
+  "engineStrict": true,
+  "os": [
+    "win32"
+  ]
+}
