@@ -32,10 +32,50 @@ Start :
 $ npm run dev
 ```
 
+Output:
+```bash
+$ npm run dev
+
+> challange@1.0.0 dev
+> node src/index.js -s examples
+
+root.prog
+    ex1.lib
+
+root.prog
+    ex1.lib
+    ex2.lib
+
+root.prog
+    ex1.lib
+    ex2.lib
+        ex3.lib
+
+The script uses approximately 4.71 MB
+```
+
 Test:
 
 ```bash
 $ npm run test
 ```
 
-Thanks
+Output:
+
+```bash
+$ npm run test
+
+> challange@1.0.0 test
+> mocha --reporter spec
+
+
+
+  My Tests
+    √ check directory listing
+    √ check directory listing without input dir
+    √ should list files inside a directory
+    √ should transform an array of file paths into a tree and check output texts
+
+
+  4 passing (9ms)
+```
