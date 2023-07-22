@@ -9,9 +9,9 @@ let nbOfSpaces = 4;
  * @param  {String} startPath Start Directory
  * @return {Promise} Promise array with all directories
  */
-async function getDirectoryContents(startPath = '') {
-  if (startPath === '') {
-    throw new Error('Please provide a valid `startPath` parameter.');
+async function getDirectoryContents(startPath = "") {
+  if (startPath === "") {
+    throw new Error("Please provide a valid `startPath` parameter.");
   }
 
   return readdir(startPath, { withFileTypes: false });
@@ -39,77 +39,114 @@ async function getFiles(parent, dirName) {
         ...(await getFiles(parent, `${dirName}\\${item.name}`)),
       ];
     } else {
-      files.push(`${dirName}\\${item.name}`);
+      if (item.name === "root.prog") {
+        files.unshift(`${dirName}\\${item.name}`);
+      } else {
+        files.push(`${dirName}\\${item.name}`);
+      }
     }
   }
 
-  return files;
+  // sort array of paths based on their path length
+  return files.sort((a, b) => a.split("\\").length - b.split("\\").length);
 }
 
 /**
- * Function to create a tree with childrens
+ * Check if array of path has space deviation
  *
- * @param {Array} paths Contains an array of file paths
- * @returns An array of objects with children and levels
+ * @param {Array} arr Array of spaces
+ * @returns { Object }
  */
-async function buildTree(paths) {
-  result = [];
-  let level = { result };
+function checkSpaceDeviation(arr) {
+  let needs = {
+    flag: false,
+    next: null,
+    where: null,
+    others: [],
+  };
 
-  paths.forEach((path) => {
-    path.split("\\").reduce((r, name, i) => {
-      if (!r[name]) {
-        r[name] = { result: [] };
-        if (name === "root.prog") {
-          r.result.unshift({
-            name,
-            children: r[name].result,
-            place: 1,
-          });
-        } else {
-          r.result.push({
-            name,
-            children: r[name].result,
-            place: i,
-          });
+  for (i = 0; i <= Math.max(...arr); i += nbOfSpaces) {
+    let idx = arr.indexOf(i + nbOfSpaces);
+    if (idx === -1) {
+      needs.flag = true;
+      needs.where = i + nbOfSpaces;
+      needs.next = i + nbOfSpaces + nbOfSpaces;
+
+      arr.forEach((a) => {
+        if (a >= needs.next) {
+          needs.others.push(a);
         }
-      }
+      });
+      return needs;
+    }
+  }
 
-      return r[name];
-    }, level);
-  });
-
-  return result;
+  return needs;
 }
 
 /**
  * ProcessOutputTexts function used to build the output formatted
  * strings with whitespace
  *
- * @param {*} item
- * @param {*} nextLevel
+ * @param {Array} listOfFilesArray This is an array sorted by path depth.
  * @returns String
  */
-function processOutputTexts(item, nextLevel = 1) {
-  let out = '';
-  let level = nextLevel || 1;
+function processOutputTexts(listOfFilesArray = []) {
+  let outs = [];
+  let prevPath = "";
+  let out = "";
+  let sp = [];
+  let r = new RegExp("root*");
 
-  for (const part of item) {
-    if (level === 1) {
-      // out += `----------- ${part.name} -----------\n`;
-    }
-
-    if (part.children.length === 0) {
-      if (part.name === "root.prog") {
-        out += `${part.name.padStart(part.name.length)}\n`;
-      } else {
-        out += `${part.name.padStart(
-          part.name.length + nbOfSpaces * part.place
-        )}\n`;
-      }
+  for (let p of listOfFilesArray) {
+    if (r.test(p)) {
+      sp.push(nbOfSpaces);
     } else {
-      out += processOutputTexts(part.children, level + 1);
+      let v = p.substr(0, p.lastIndexOf("\\")).split("\\").length * nbOfSpaces;
+      if (
+        v === nbOfSpaces &&
+        p.substr(0, p.lastIndexOf("\\")).split("\\").length === 1
+      ) {
+        sp.push(v + nbOfSpaces);
+      } else {
+        sp.push(v + nbOfSpaces);
+      }
     }
+  }
+
+  for (let part of listOfFilesArray) {
+    let file = path.basename(part);
+    prevPath = part.substr(0, part.lastIndexOf("\\"));
+    let r = new RegExp("root*");
+    if (r.test(file)) {
+      outs.push("    root.prog");
+    } else {
+      let calculatedSpace = part.split("\\").length * nbOfSpaces;
+      outs.push(
+        part
+          .replace(prevPath, new Array(calculatedSpace + 1).join(" "))
+          .replace("\\", "")
+      );
+    }
+  }
+
+  // check space deviation
+  let { flag, where, next, others } = checkSpaceDeviation(sp);
+  if (flag) {
+    for (let i = 0; i < sp.length; i++) {
+      if (sp[i] === next) {
+        sp[i] = where;
+      } else {
+        if (others.includes(sp[i])) {
+          sp[i] = sp[i] - nbOfSpaces;
+        }
+      }
+    }
+  }
+  // compose output
+  for (let i = 0; i < sp.length; i++) {
+    let actualText = outs[i].trim();
+    out += `${actualText.padStart(actualText.length + sp[i])}\n`;
   }
 
   return out;
@@ -118,6 +155,5 @@ function processOutputTexts(item, nextLevel = 1) {
 module.exports = {
   listDirectory: getDirectoryContents,
   getFiles,
-  processTree: buildTree,
-  processOutputTexts,
+  processOutputTexts
 };

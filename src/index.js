@@ -1,7 +1,6 @@
 const {
   listDirectory,
   getFiles,
-  processTree,
   processOutputTexts,
 } = require("./helpers/os");
 const path = require("node:path");
@@ -22,13 +21,10 @@ if (!argv.s) {
 
     for (const dir of directoriesArray) {
       let files = [];
-      let tree = null;
+
       if (normalizePath.split(path.sep).length === 1) {
         files = await getFiles(normalizePath, dir);
-
-        tree = await processTree(files);
-
-        console.log(processOutputTexts(tree));
+        console.log(processOutputTexts(files));
       } else {
         throw new Error(
           "Please run with like so: `node src/index -s [DIR_NAME]`"
